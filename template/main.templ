@@ -1,0 +1,330 @@
+package template
+
+import (
+	"github.com/ituoga/proj1/types"
+	"fmt"
+)
+
+templ Vienas(a string) {
+	<p id="vienas">Value: { a }</p>
+}
+
+templ Du(a string) {
+	<p id="du">kazkas kita: { a }</p>
+}
+
+templ Block1(id string) {
+	<div id={ id } class="py-4">
+		{ children... }
+	</div>
+}
+
+templ TBody(id string) {
+	<tbody id={ id }>
+		{ children... }
+	</tbody>
+}
+
+templ AppendLine(id string, ilid string, item types.InvoiceRow) {
+	@InvoiceLine(ilid, item)
+	@InvoiceLine2(ilid, item)
+}
+
+templ InvoiceLine(id string, item types.InvoiceRow) {
+	<tr id={ fmt.Sprintf("row-%s-one", item.UID) }>
+		<td>
+			name: <input value={ item.Name } class="block w-full rounded-md border-0 p-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" name={ fmt.Sprintf("lines[%s].Name", id) } type="text" data-on-keyup.debounce_300ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='name';$eln='%s';$$patch('/s');", item.UID) }/>
+		</td>
+		<td>price: <input value={ fmt.Sprintf("%.02f", item.Price) } class="block w-full rounded-md border-0 p-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" name={ fmt.Sprintf("lines[%s].Price", id) } type="text" data-on-keyup.debounce_300ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='price';$eln='%s';$$patch('/s');", item.UID) }/></td>
+		<td>qty: <input value={ fmt.Sprintf("%.03f", item.Quantity) } class="block w-full rounded-md border-0 p-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" name={ fmt.Sprintf("lines[%s].Price", id) } type="text" data-on-keyup.debounce_300ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='qty';$eln='%s';$$patch('/s');", item.UID) }/></td>
+		<td>
+			units: 
+			<select class="block w-full rounded-md border-0 p-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" name={ fmt.Sprintf("lines[%s].Price", id) } type="text" data-on-change={ fmt.Sprintf("$elv=ctx.el.value;$elf='units';$eln='%s';$$patch('/s');", item.UID) }>
+				<option value="vnt">vnt</option>
+				<option value="m">m</option>
+			</select>
+		</td>
+		<td>
+			VAT: 
+			<select class="block w-full rounded-md border-0 p-2.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" name={ fmt.Sprintf("lines[%s].Price", id) } type="text" data-on-change={ fmt.Sprintf("$elv=ctx.el.value;$elf='vat';$eln='%s';$$patch('/s');", item.UID) }>
+				<option value="1">0%</option>
+				<option value="1.09">9%</option>
+				<option value="1.21">21%</option>
+			</select>
+		</td>
+		@TDAmount(item.UID, item.Quantity*item.Price*item.Vat)
+	</tr>
+}
+
+templ TDAmount(id string, amount float64) {
+	<td id={ fmt.Sprintf("td-id-%s", id) }>
+		{ fmt.Sprintf("%.02f", amount) } eu
+	</td>
+}
+
+templ Debug(v any) {
+	<code id="debug">{ templ.JSONString(v) }</code>
+}
+
+templ InvoiceLine2(id string, item types.InvoiceRow) {
+	<tr id={ fmt.Sprintf("row-%s-two", item.UID) }>
+		<td>
+			<a data-on-click={ fmt.Sprintf("$eln='%s';$$delete('/delete/%s')", item.UID, item.UID) } name="ld">remove row</a>
+		</td>
+		<td colspan="1"><textarea data-on-keyup.debounce_300ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='comment';$eln='%s';$$patch('/s');", item.UID) } name={ fmt.Sprintf("lines[%s].Comment", id) }>{ item.Comment }</textarea></td>
+	</tr>
+}
+
+templ InvoiceLines(lines []types.InvoiceRow, ds any) {
+	<form method="post" action="" id="tablevienas">
+		<div data-store={ templ.JSONString(ds) }>
+			<table id="table-1">
+				<tbody id="tbody">
+					for i, line := range lines {
+						@InvoiceLine(fmt.Sprintf("%d", i), line)
+						@InvoiceLine2(fmt.Sprintf("%d", i), line)
+					}
+				</tbody>
+			</table>
+		</div>
+		<a data-on-click="$$post('/signal')">Add row</a>
+		<a data-on-click="$$post('/reset')">reset</a>
+	</form>
+}
+
+templ InputText(value string, placeholder string, name string, elno string) {
+	<input placeholder={ placeholder } value={ value } class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="text" data-on-keyup.debounce_100ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('/s');", name, elno) } data-on-blur={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('/s');", name, elno) }/>
+}
+
+templ InputTextURL(value string, placeholder string, name string, elno string, url string) {
+	<input placeholder={ placeholder } value={ value } class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="text" data-on-keyup.debounce_100ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('%s');", name, elno, url) } data-on-blur={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('%s');", name, elno, url) }/>
+}
+
+templ InputTextSettings(value string, placeholder string, name string, elno string) {
+	<input placeholder={ placeholder } value={ value } class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="text" data-on-keyup.debounce_100ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('/settings');", name, elno) } data-on-blur={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('/settings');", name, elno) }/>
+}
+
+templ Vat(pretotal, vat, total float64) {
+	<div id="totals">
+		<div><strong>Without VAT</strong>{ fmt.Sprintf("%.02f", pretotal) }</div>
+		<div><strong>VAT</strong>{ fmt.Sprintf("%.02f", vat) }</div>
+		<div><strong>Total With VAT</strong>{ fmt.Sprintf("%.02f", total) }</div>
+	</div>
+}
+
+templ Summary(s types.Summary) {
+	<div id="summary">
+		<h3>Summary</h3>
+		<div>
+			<div>Without VAT: { fmt.Sprintf("%.02f",s.Subtotal) }</div>
+			for _, v := range s.Vat {
+				<div>VAT { v.Name }: { fmt.Sprintf("%.02f",v.Value) }</div>
+			}
+			<div>Total VAT: { fmt.Sprintf("%.02f", s.VATTotal) } </div>
+			<div>Total: { fmt.Sprintf("%.02f",s.Total) }</div>
+		</div>
+	</div>
+}
+
+templ InvoiceHead(invoice types.Invoice) {
+	<div>
+		<h3>1. Datos</h3>
+		@List("3") {
+			@ListItem("") {
+				<div>
+					@InputText(invoice.DocumentDate, "2000-01-01", "document_date", "")
+				</div>
+			}
+			@ListItem("") {
+				<div>
+					@InputText(invoice.DueDate, "2000-01-01", "due_date", "")
+				</div>
+			}
+		}
+		<h3>2. Kursas ir serija</h3>
+		@List("4") {
+			@ListItem("") {
+				<div>
+					@InputText(invoice.Currency, "EUR", "currency", "")
+				</div>
+			}
+			@ListItem("") {
+				<div>
+					@InputText(fmt.Sprintf("%f", invoice.Rate), "1.0000", "currency_rate", "")
+				</div>
+			}
+			@ListItem("") {
+				<div>
+					@InputText(invoice.SerialName, "SR", "serial_name", "")
+				</div>
+			}
+			@ListItem("") {
+				<div>
+					@InputText("1", "", "currency_rate", "")
+				</div>
+			}
+		}
+	</div>
+}
+
+templ InvoiceRecipient(invoice types.Invoice) {
+	<div id="recipient">
+		<h3>3. Gavėjas</h3>
+		@List("2") {
+			@ListItem("Pardavejas") {
+				<div>
+					Vardenis pavardenis
+				</div>
+				<div>
+					IDV
+				</div>
+			}
+			@ListItem("Pirkejas") {
+				<div>
+					@InputText(invoice.RecipientName, "Gatvė 1, Miestas", "recipient_name", "")
+					// @Autocomplete(nil, "pirkejas")
+					@AutoPirkejas(nil)
+				</div>
+			}
+		}
+	</div>
+}
+
+templ AutoPirkejas(in []types.Complete) {
+	@Autocomplete(in, "pirkejas")
+}
+
+templ Autocomplete(in []types.Complete, id string) {
+	<div id={ "autocomplete1" + id }>
+		<div class="relative ">
+			<ul class="absolute z-10 mt-1 max-h-80 w-full overflow-scroll rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+				for _, v := range in {
+					<li class="relative cursor-default select-none py-2 pl-3 pr-9 text-gray-900" id="option-0" role="option" tabindex="-1">
+						<a class="block cursor-pointer" data-on-click={ fmt.Sprintf("$$post('/complete/%s')", v.Signal) }>{ v.Title }</a>
+					</li>
+				}
+			</ul>
+		</div>
+	</div>
+}
+
+templ Index(a string) {
+	@Layout("Index") {
+		<h1>Index</h1>
+		<p>Index page</p>
+		@Vienas(a)
+		@Du(a)
+		@Block1("block1") {
+			<p>Block1</p>
+		}
+		<a data-on-click="$$get('/api')">increment</a>
+	}
+}
+
+templ Index2(a string, dataStore any, invoice types.Invoice) {
+	@Page2() {
+		<h1>Index</h1>
+		<div>
+			<h2>Translations</h2>
+			<div>{ types.Translation(ctx).Get("hello.world") }</div>
+			<div>{ types.Translation(ctx).Get("foo.to.translate") }</div>
+		</div>
+		@Vienas(a)
+		@Du(a)
+		@InvoiceHead(invoice)
+		@InvoiceRecipient(invoice)
+		@List("1") {
+			@ListItem("Invoice Lines") {
+				@InvoiceLines(invoice.Lines, dataStore)
+			}
+		}
+		@Summary(invoice.Summary)
+		// @Vat(0, 0, 0)
+		<a data-on-click="$$get('/api')">increment</a>
+		<a data-on-click="$$get('/modal')">modal</a>
+		<code data-text="JSON.stringify(ctx.store(),null,2)"></code>
+		<hr/>
+		@Debug("")
+		// @Modal()
+		<div id="modal"></div>
+		// @FloatingButton()
+	}
+}
+
+templ FloatingButton() {
+	<div data-dial-init class="fixed end-6 bottom-12 group" data-store="{ selft: false }">
+		<div id="speed-dial-menu-default" data-show="$selft" class="flex flex-col items-center mb-4 space-y-2">
+			<button type="button" data-tooltip-target="tooltip-share" data-tooltip-placement="left" class="flex justify-center items-center w-[52px] h-[52px] text-gray-500 hover:text-gray-900 bg-white rounded-full border border-gray-200 dark:border-gray-600 shadow-sm dark:hover:text-white dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:focus:ring-gray-400">
+				<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 18">
+					<path d="M14.419 10.581a3.564 3.564 0 0 0-2.574 1.1l-4.756-2.49a3.54 3.54 0 0 0 .072-.71 3.55 3.55 0 0 0-.043-.428L11.67 6.1a3.56 3.56 0 1 0-.831-2.265c.006.143.02.286.043.428L6.33 6.218a3.573 3.573 0 1 0-.175 4.743l4.756 2.491a3.58 3.58 0 1 0 3.508-2.871Z"></path>
+				</svg>
+				<span class="sr-only">Share</span>
+			</button>
+			<div id="tooltip-share" role="tooltip" class="absolute z-10 invisible inline-block w-auto px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+				Share
+				<div class="tooltip-arrow" data-popper-arrow></div>
+			</div>
+			<button type="button" data-tooltip-target="tooltip-print" data-tooltip-placement="left" class="flex justify-center items-center w-[52px] h-[52px] text-gray-500 hover:text-gray-900 bg-white rounded-full border border-gray-200 dark:border-gray-600 shadow-sm dark:hover:text-white dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:focus:ring-gray-400">
+				<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+					<path d="M5 20h10a1 1 0 0 0 1-1v-5H4v5a1 1 0 0 0 1 1Z"></path>
+					<path d="M18 7H2a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2v-3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2Zm-1-2V2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3h14Z"></path>
+				</svg>
+				<span class="sr-only">Print</span>
+			</button>
+			<div id="tooltip-print" role="tooltip" class="absolute z-10 invisible inline-block w-auto px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+				Print
+				<div class="tooltip-arrow" data-popper-arrow></div>
+			</div>
+			<button type="button" data-tooltip-target="tooltip-download" data-tooltip-placement="left" class="flex justify-center items-center w-[52px] h-[52px] text-gray-500 hover:text-gray-900 bg-white rounded-full border border-gray-200 dark:border-gray-600 shadow-sm dark:hover:text-white dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:focus:ring-gray-400">
+				<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20">
+					<path d="M14.707 7.793a1 1 0 0 0-1.414 0L11 10.086V1.5a1 1 0 0 0-2 0v8.586L6.707 7.793a1 1 0 1 0-1.414 1.414l4 4a1 1 0 0 0 1.416 0l4-4a1 1 0 0 0-.002-1.414Z"></path>
+					<path d="M18 12h-2.55l-2.975 2.975a3.5 3.5 0 0 1-4.95 0L4.55 12H2a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2Zm-3 5a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path>
+				</svg>
+				<span class="sr-only">Download</span>
+			</button>
+			<div id="tooltip-download" role="tooltip" class="absolute z-10 invisible inline-block w-auto px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+				Download
+				<div class="tooltip-arrow" data-popper-arrow></div>
+			</div>
+			<button type="button" data-tooltip-target="tooltip-copy" data-tooltip-placement="left" class="flex justify-center items-center w-[52px] h-[52px] text-gray-500 hover:text-gray-900 bg-white rounded-full border border-gray-200 dark:border-gray-600 dark:hover:text-white shadow-sm dark:text-gray-400 hover:bg-gray-50 dark:bg-gray-700 dark:hover:bg-gray-600 focus:ring-4 focus:ring-gray-300 focus:outline-none dark:focus:ring-gray-400">
+				<svg class="w-5 h-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 18 20">
+					<path d="M5 9V4.13a2.96 2.96 0 0 0-1.293.749L.879 7.707A2.96 2.96 0 0 0 .13 9H5Zm11.066-9H9.829a2.98 2.98 0 0 0-2.122.879L7 1.584A.987.987 0 0 0 6.766 2h4.3A3.972 3.972 0 0 1 15 6v10h1.066A1.97 1.97 0 0 0 18 14V2a1.97 1.97 0 0 0-1.934-2Z"></path>
+					<path d="M11.066 4H7v5a2 2 0 0 1-2 2H0v7a1.969 1.969 0 0 0 1.933 2h9.133A1.97 1.97 0 0 0 13 18V6a1.97 1.97 0 0 0-1.934-2Z"></path>
+				</svg>
+				<span class="sr-only">Copy</span>
+			</button>
+			<div id="tooltip-copy" role="tooltip" class="absolute z-10 invisible inline-block w-auto px-3 py-2 text-sm font-medium text-white transition-opacity duration-300 bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip dark:bg-gray-700">
+				Copy
+				<div class="tooltip-arrow" data-popper-arrow></div>
+			</div>
+		</div>
+		<button data-on-click="$selft=!$selft;" type="button" data-dial-toggle="speed-dial-menu-default" aria-controls="speed-dial-menu-default" aria-expanded="false" class="flex items-center justify-center text-white bg-blue-700 rounded-full w-14 h-14 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 focus:outline-none dark:focus:ring-blue-800">
+			<svg class="w-5 h-5 transition-transform group-hover:rotate-45" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 18 18">
+				<path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 1v16M1 9h16"></path>
+			</svg>
+			<span class="sr-only">Open actions menu</span>
+		</button>
+	</div>
+}
+
+templ List(cols string) {
+	<ul
+		role="list"
+		class={ "grid grid-cols-1 gap-x-6 gap-y-8 xl:gap-x-8",
+        fmt.Sprintf("lg:grid-cols-%s", cols) }
+	>
+		{ children... }
+	</ul>
+}
+
+templ ListItem(title string) {
+	<li class="_overflow-hidden rounded-xl border border-gray-200">
+		if title != "" {
+			<div class="flex items-center gap-x-4 border-b border-gray-900/5 bg-gray-50 p-6">
+				<!-- <img src="https://tailwindui.com/img/logos/48x48/tuple.svg" alt="Tuple" class="h-12 w-12 flex-none rounded-lg bg-white object-cover ring-1 ring-gray-900/10"> -->
+				<div class="text-sm font-medium leading-3 text-gray-900">{ title }</div>
+			</div>
+		}
+		{ children... }
+	</li>
+}

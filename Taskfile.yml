@@ -1,0 +1,10 @@
+version: '3'
+
+tasks:
+  default:
+    deps: [p1, p2]
+  p1:
+    TEMPL_EXPERIMENT=rawgo templ generate --watch
+  p2:
+    gow run cmd/app/*.go
+

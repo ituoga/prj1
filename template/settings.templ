@@ -1,0 +1,46 @@
+package template
+
+import "github.com/ituoga/proj1/types"
+import "fmt"
+
+templ Settings(settings types.Settings, ds any) {
+    @Page2() {
+        <div data-store={ templ.JSONString(ds) }></div>
+        <h1>Index</h1>
+        <div>
+        <div>
+            @InputTextSettings(settings.MyName, "Name", "my-name","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.MyCode, "Code", "my-code","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.MyVAT, "Vat", "my-vat","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.MyEmail, "Email", "my-email","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.MyPhone, "Phone", "my-phone","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.MyAddr, "Address", "my-address","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.MyCountry, "Country", "my-country","" )
+        </div>
+        <div>
+            @InputTextSettings(settings.SerialName, "Series", "my-series","" )
+        </div>
+        <div>
+            @InputTextSettings(fmt.Sprintf("%d",settings.SerialNo), "Number", "my-number","" )
+        </div>
+        // <button type="button" value="Save" data-on-click="$$post('/settings')">Save</button>
+        // <div id="sync"></div>
+        </div>
+    }
+}
+
+templ Div(id string, value string) {
+    <div id={id}>{ value }</div>
+}
