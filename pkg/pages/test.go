@@ -1,9 +1,8 @@
 package pages
 
-import "github.com/ituoga/proj1/types"
-
-type TestIndex struct {
-	DS types.DataStore
-
-	Result string
+type Login struct {
+	DS struct {
+		Username string
+		Password string
+	}
 }

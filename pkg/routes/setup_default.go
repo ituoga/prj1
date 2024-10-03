@@ -1,7 +1,6 @@
 package routes
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,7 +17,7 @@ import (
 	"github.com/nats-io/nuid"
 )
 
-func SetupDefault(router chi.Router, session sessions.Store) {
+func SetupDefault(sr chi.Router, session sessions.Store) {
 
 	var i = 10
 
@@ -43,8 +42,14 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 		{Signal: "6", Title: "Name 6"},
 	}
 
+	sr.Route("/dashboard", func(dashboardRouter chi.Router) {
+		dashboardRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			http.Redirect(w, r, "/invoices", http.StatusSeeOther)
+		})
+	})
+
 	n := 0
-	router.HandleFunc("/sse", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/sse", func(w http.ResponseWriter, r *http.Request) {
 		sse := datastar.NewSSE(w, r)
 		t := time.NewTicker(1 * time.Second)
 
@@ -67,18 +72,19 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 		}
 	})
 
-	router.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
 		i++
 		sse := datastar.NewSSE(w, r)
 		datastar.RenderFragmentTempl(sse, template.Vienas(fmt.Sprintf("%d", i)), datastar.WithoutViewTransitions())
 		datastar.RenderFragmentTempl(sse, template.Du(fmt.Sprintf("%d", i)), datastar.WithoutViewTransitions())
 	})
 
-	router.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		template.Index(fmt.Sprintf("%d", i)).Render(context.TODO(), w)
+	sr.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// template.Index(fmt.Sprintf("%d", i)).Render(context.TODO(), w)
+		http.Redirect(w, r, "/dashboard", http.StatusSeeOther)
 	})
 
-	router.HandleFunc("/signal", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/signal", func(w http.ResponseWriter, r *http.Request) {
 		invoiceForm.Lines = append(invoiceForm.Lines, types.InvoiceRow{UID: nuid.Next(), Units: "vnt", Vat: 1, Quantity: 1})
 
 		sse := datastar.NewSSE(w, r)
@@ -99,7 +105,7 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 
 	})
 
-	router.HandleFunc("/delete/{id}", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/delete/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		log.Printf("id : %v", id)
 
@@ -125,7 +131,7 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 		// datastar.PatchStore(sse, mpp)
 	})
 
-	router.HandleFunc("/complete/{id}", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/complete/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id := r.PathValue("id")
 		_ = id
 		sse := datastar.NewSSE(w, r)
@@ -138,11 +144,11 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 		}
 
 		datastar.RenderFragmentTempl(sse, template.InvoiceRecipient(invoiceForm), datastar.WithoutViewTransitions())
-		// datastar.RenderFragmentTempl(sse, template.Autocomplete(autocomplete), datastar.WithoutViewTransitions())
+
 		datastar.RenderFragmentTempl(sse, template.Debug(invoiceForm), datastar.WithoutViewTransitions())
 	})
 
-	router.HandleFunc("/s", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/s", func(w http.ResponseWriter, r *http.Request) {
 
 		var mpp types.DataStore
 		err := datastar.BodyUnmarshal(r, &mpp)
@@ -233,7 +239,7 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 		_ = sse
 	})
 
-	router.HandleFunc("/settings", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/settings", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPatch {
 
 			var mpp map[string]interface{}
@@ -272,7 +278,7 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 		}).Render(r.Context(), w)
 	})
 
-	router.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
 		invoiceForm = types.Invoice{
 			Rate:         1.0,
 			Currency:     "EUR",
@@ -289,11 +295,17 @@ func SetupDefault(router chi.Router, session sessions.Store) {
 
 	})
 
-	router.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
+	sr.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
 		invoiceForm.VAT()
 		// log.Printf("%+v", invoiceForm)
 		template.Index2(fmt.Sprintf("%d", i), map[string]interface{}{
 			"elv": "", "eln": "", "elf": "",
 		}, invoiceForm).Render(r.Context(), w)
+	})
+
+	sr.Route("/invoices", func(invoicesRouter chi.Router) {
+		invoicesRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+			template.InvoicesIndex().Render(r.Context(), w)
+		})
 	})
 }
