@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gorilla/sessions"
-	"github.com/ituoga/proj1/pkg/experiments"
-	"github.com/ituoga/proj1/types"
+	"github.com/ituoga/prj1/pkg/experiments"
+	types "github.com/ituoga/prj1/types"
 )
 
 var settings = types.Settings{

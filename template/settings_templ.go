@@ -10,7 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"github.com/ituoga/proj1/types"
+	"github.com/ituoga/prj1/types"
 )
 
 func Settings(settings types.Settings, ds any) templ.Component {

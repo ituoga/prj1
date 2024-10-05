@@ -7,9 +7,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/gorilla/sessions"
-	"github.com/ituoga/proj1/pkg/experiments"
-	"github.com/ituoga/proj1/pkg/pages"
-	"github.com/ituoga/proj1/template"
+	"github.com/ituoga/prj1/pkg/experiments"
+	"github.com/ituoga/prj1/pkg/pages"
+	template "github.com/ituoga/prj1/template"
 )
 
 func SetupProducts(router chi.Router, session sessions.Store) {

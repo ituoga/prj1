@@ -5,7 +5,7 @@ import (
 
 	"github.com/jmoiron/sqlx"
 
-	"github.com/ituoga/proj1/types"
+	types "github.com/ituoga/prj1/types"
 )
 
 type AutoCompleteDB struct {

@@ -1,6 +1,6 @@
 package pages
 
-import "github.com/ituoga/proj1/types"
+import types "github.com/ituoga/prj1/types"
 
 type InvoiceForm struct {
 	DS       types.DataStore

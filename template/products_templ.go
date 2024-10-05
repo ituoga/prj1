@@ -8,7 +8,7 @@ package template
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/ituoga/proj1/pkg/pages"
+import "github.com/ituoga/prj1/pkg/pages"
 import "fmt"
 
 func ProductsIndex(page pages.ProductsIndex) templ.Component {

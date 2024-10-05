@@ -7,7 +7,7 @@ import (
 
 	"github.com/delaneyj/toolbelt"
 	"github.com/google/uuid"
-	"github.com/ituoga/proj1/pkg/password"
+	"github.com/ituoga/prj1/pkg/password"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 

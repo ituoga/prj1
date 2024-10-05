@@ -3,7 +3,7 @@ package experiments
 import (
 	"log"
 
-	"github.com/ituoga/proj1/types"
+	types "github.com/ituoga/prj1/types"
 	"github.com/jmoiron/sqlx"
 )
 

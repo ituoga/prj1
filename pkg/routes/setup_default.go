@@ -8,10 +8,10 @@ import (
 	"reflect"
 	"time"
 
-	"github.com/ituoga/proj1/pkg/experiments"
-	"github.com/ituoga/proj1/pkg/pages"
-	"github.com/ituoga/proj1/template"
-	"github.com/ituoga/proj1/types"
+	"github.com/ituoga/prj1/pkg/experiments"
+	"github.com/ituoga/prj1/pkg/pages"
+	template "github.com/ituoga/prj1/template"
+	types "github.com/ituoga/prj1/types"
 
 	"github.com/delaneyj/datastar"
 	"github.com/go-chi/chi/v5"

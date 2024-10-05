@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/delaneyj/toolbelt"
-	"github.com/ituoga/proj1/types"
+	types "github.com/ituoga/prj1/types"
 	"zombiezen.com/go/sqlite"
 	"zombiezen.com/go/sqlite/sqlitex"
 )

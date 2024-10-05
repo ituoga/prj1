@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/ituoga/proj1/pkg/routes"
+	"github.com/ituoga/prj1/pkg/routes"
 
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/chi/v5"

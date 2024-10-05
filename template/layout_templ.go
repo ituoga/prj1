@@ -10,8 +10,8 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"fmt"
-	"github.com/ituoga/proj1/pkg/pages"
-	"github.com/ituoga/proj1/types"
+	"github.com/ituoga/prj1/pkg/pages"
+	"github.com/ituoga/prj1/types"
 	"strconv"
 )
 

@@ -1,4 +1,4 @@
-module github.com/ituoga/proj1
+module github.com/ituoga/prj1
 
 go 1.23.1
 

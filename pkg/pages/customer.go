@@ -1,7 +1,7 @@
 package pages
 
 import (
-	"github.com/ituoga/proj1/types"
+	types "github.com/ituoga/prj1/types"
 )
 
 type CustomerForm struct {
