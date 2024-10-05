@@ -2,6 +2,7 @@ package template
 
 import (
 	"github.com/ituoga/proj1/types"
+	"github.com/ituoga/proj1/pkg/pages"
 	"fmt"
 )
 
@@ -69,7 +70,8 @@ templ Debug(v any) {
 templ InvoiceLine2(id string, item types.InvoiceRow) {
 	<tr id={ fmt.Sprintf("row-%s-two", item.UID) }>
 		<td>
-			<a data-on-click={ fmt.Sprintf("$eln='%s';$$delete('/delete/%s')", item.UID, item.UID) } name="ld">remove row</a>
+			// <a data-on-click={ fmt.Sprintf("$eln='%s';$$delete('/delete/%s')", item.UID, item.UID) } name="ld">remove row</a>
+			@Button("remove row", templ.Attributes{"data-on-click": fmt.Sprintf("$$delete('/delete/%s')", item.UID)})
 		</td>
 		<td colspan="1"><textarea data-on-keyup.debounce_300ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='comment';$eln='%s';$$patch('/s');", item.UID) } name={ fmt.Sprintf("lines[%s].Comment", id) }>{ item.Comment }</textarea></td>
 	</tr>
@@ -87,8 +89,10 @@ templ InvoiceLines(lines []types.InvoiceRow, ds any) {
 				</tbody>
 			</table>
 		</div>
-		<a data-on-click="$$post('/signal')">Add row</a>
-		<a data-on-click="$$post('/reset')">reset</a>
+		// <a data-on-click="$$post('/signal')">Add row</a>
+		@Button("Add row", templ.Attributes{"data-on-click": "$$post('/signal')"})
+		@Button("Reset", templ.Attributes{"data-on-click": "$$post('/reset')"})
+		// <a data-on-click="$$post('/reset')">reset</a>
 	</form>
 }
 
@@ -102,6 +106,10 @@ templ InputTextURL(value string, placeholder string, name string, elno string, u
 
 templ InputTextSettings(value string, placeholder string, name string, elno string) {
 	<input placeholder={ placeholder } value={ value } class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="text" data-on-keyup.debounce_100ms={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('/settings');", name, elno) } data-on-blur={ fmt.Sprintf("$elv=ctx.el.value;$elf='%s';$eln='%s';$$patch('/settings');", name, elno) }/>
+}
+
+templ InputTextModel(name string, placeholder string) {
+	<input placeholder={ placeholder } class="block w-full rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6" type="text" data-model={ name } />
 }
 
 templ Vat(pretotal, vat, total float64) {
@@ -126,18 +134,18 @@ templ Summary(s types.Summary) {
 	</div>
 }
 
-templ InvoiceHead(invoice types.Invoice) {
+templ InvoiceHead(page pages.InvoiceForm) {
 	<div>
 		<h3>1. Datos</h3>
 		@List("3") {
 			@ListItem("") {
 				<div>
-					@InputText(invoice.DocumentDate, "2000-01-01", "document_date", "")
+					@InputText(page.Form.DocumentDate, "2000-01-01", "document_date", "")
 				</div>
 			}
 			@ListItem("") {
 				<div>
-					@InputText(invoice.DueDate, "2000-01-01", "due_date", "")
+					@InputText(page.Form.DueDate, "2000-01-01", "due_date", "")
 				</div>
 			}
 		}
@@ -145,43 +153,60 @@ templ InvoiceHead(invoice types.Invoice) {
 		@List("4") {
 			@ListItem("") {
 				<div>
-					@InputText(invoice.Currency, "EUR", "currency", "")
+					@InputText(page.Form.Currency, "EUR", "currency", "")
 				</div>
 			}
 			@ListItem("") {
 				<div>
-					@InputText(fmt.Sprintf("%f", invoice.Rate), "1.0000", "currency_rate", "")
+					@InputText(fmt.Sprintf("%f", page.Form.Rate), "1.0000", "currency_rate", "")
 				</div>
 			}
 			@ListItem("") {
 				<div>
-					@InputText(invoice.SerialName, "SR", "serial_name", "")
+					@InputText(page.Settings.SerialName, "SR", "serial_name", "")
 				</div>
 			}
 			@ListItem("") {
 				<div>
-					@InputText("1", "", "currency_rate", "")
+					@InputText(fmt.Sprintf("%d", page.Settings.SerialNo+1), "", "currency_rate", "")
 				</div>
 			}
 		}
 	</div>
 }
 
-templ InvoiceRecipient(invoice types.Invoice) {
+templ InvoiceRecipient(page pages.InvoiceForm) {
 	<div id="recipient">
 		<h3>3. Gavėjas</h3>
 		@List("2") {
 			@ListItem("Pardavejas") {
 				<div>
-					Vardenis pavardenis
+					<strong>{ page.Settings.MyName }</strong>
 				</div>
 				<div>
-					IDV
+					<strong>Code</strong>{ page.Settings.MyCode }
+				</div>
+				<div>
+					<strong>VAT</strong>{ page.Settings.MyVAT }
+				</div>
+				<div>
+					<strong>Address</strong>{ page.Settings.MyAddr }
+				</div>
+				<div>
+					<strong>Email</strong>{ page.Settings.MyEmail }
+				</div>
+				<div>
+					<strong>Phone</strong>{ page.Settings.MyPhone }
+				</div>
+				<div>
+					<strong>Country</strong>{ page.Settings.MyCountry }
 				</div>
 			}
 			@ListItem("Pirkejas") {
 				<div>
-					@InputText(invoice.RecipientName, "Gatvė 1, Miestas", "recipient_name", "")
+					@InputText(page.Form.RecipientName, "Name", "recipient_name", "")
+					@InputText(page.Form.RecipientCode, "code", "recipient_code", "")
+					@InputText(page.Form.RecipientVAT, "VAT", "recipient_vat", "")
 					// @Autocomplete(nil, "pirkejas")
 					@AutoPirkejas(nil)
 				</div>
@@ -221,33 +246,26 @@ templ Index(a string) {
 	}
 }
 
-templ Index2(a string, dataStore any, invoice types.Invoice) {
+templ InvoiceForm(page pages.InvoiceForm) {
 	@Page2() {
-		<h1>Index</h1>
-		<div>
-			<h2>Translations</h2>
-			<div>{ types.Translation(ctx).Get("hello.world") }</div>
-			<div>{ types.Translation(ctx).Get("foo.to.translate") }</div>
-		</div>
-		@Vienas(a)
-		@Du(a)
-		@InvoiceHead(invoice)
-		@InvoiceRecipient(invoice)
+		<h1>Crete invoice</h1>
+		@InvoiceHead(page)
+		@InvoiceRecipient(page)
 		@List("1") {
 			@ListItem("Invoice Lines") {
-				@InvoiceLines(invoice.Lines, dataStore)
+				@InvoiceLines(page.Form.Lines, page.DS)
 			}
 		}
-		@Summary(invoice.Summary)
-		// @Vat(0, 0, 0)
-		<a data-on-click="$$get('/api')">increment</a>
-		<a data-on-click="$$get('/modal')">modal</a>
+		@Summary(page.Form.Summary)
+
+		// <a data-on-click="$$get('/api')">increment</a>
+		// <a data-on-click="$$get('/modal')">modal</a>
 		<code data-text="JSON.stringify(ctx.store(),null,2)"></code>
 		<hr/>
+		@Button("Save", templ.Attributes{"data-on-click": "$$put('/store')"})
+		<hr/>
 		@Debug("")
-		// @Modal()
-		<div id="modal"></div>
-		// @FloatingButton()
+		
 	}
 }
 
@@ -327,4 +345,12 @@ templ ListItem(title string) {
 		}
 		{ children... }
 	</li>
+}
+
+templ Button(title string, attrs templ.Attributes) {
+	<button { attrs... } type="button"  class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">{ title }</button>
+}
+
+templ ButtonLink(title string, attrs templ.Attributes) {
+	<a { attrs... }  class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800">{ title }</a>
 }

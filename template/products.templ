@@ -1,0 +1,34 @@
+package template
+
+import "github.com/ituoga/proj1/pkg/pages"
+import "fmt"
+
+templ ProductsIndex(page pages.ProductsIndex) {
+	@Page2() {
+		products
+		@ButtonLink("New", templ.Attributes{"href":"/products/new"})
+		<table>
+			for _, product := range page.Data {
+				<tr>
+					<td>{ product.Data.Name }</td>
+					<td>{ product.Data.Code }</td>
+                    if product.UUID == nil {
+                        <td>ner</td>
+                    } else {
+                        <td><a href={ templ.SafeURL(fmt.Sprintf("/products/%s", *product.UUID)) }>edit</a></td>
+                    }
+				</tr>
+			}
+		</table>
+	}
+}
+
+templ ProductsForm(page pages.ProductsForm) {
+	@Page2() {
+		<div data-store={ templ.JSONString(page.Form.Data)}>
+        @InputTextModel("code", "Code")
+        @InputTextModel("name", "Name")
+        </div>
+        @Button("Store", templ.Attributes{"data-on-click":"$$put('/products/store')"})
+	}
+}

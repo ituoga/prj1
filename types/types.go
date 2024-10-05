@@ -8,42 +8,42 @@ import (
 )
 
 type InvoiceRow struct {
-	Number  int
-	Name    string
-	Price   float64
-	Comment string
+	Number  int     `map:"number"`
+	Name    string  `map:"name"`
+	Price   float64 `map:"price"`
+	Comment string  `map:"comment"`
 
 	UID string
 
-	Quantity float64
-	Units    string
-	Vat      float64
+	Quantity float64 `map:"qty"`
+	Units    string  `map:"units"`
+	Vat      float64 `map:"vat"`
 }
 
 type Invoice struct {
-	Number string
+	Number string `map:"number"`
 
-	DocumentDate string
-	DueDate      string
+	DocumentDate string `map:"document_date"`
+	DueDate      string `map:"due_date"`
 
-	Currency   string
-	Rate       float64
-	SerialName string
+	Currency   string  `map:"currency"`
+	Rate       float64 `map:"currency_rate"`
+	SerialName string  `map:"serial_name"`
 
-	RecipientName    string
-	RecipientCode    string
-	RecipientVAT     string
-	RecipientEmail   string
-	RecipientPhone   string
-	RecipientAddr    string
-	RecipientCountry string
+	RecipientName    string `map:"recipient_name"`
+	RecipientCode    string `map:"recipient_code"`
+	RecipientVAT     string `map:"recipient_vat"`
+	RecipientEmail   string `map:"recipient_email"`
+	RecipientPhone   string `map:"recipient_phone"`
+	RecipientAddr    string `map:"recipient_addr"`
+	RecipientCountry string `map:"recipient_country"`
 
-	Lines []InvoiceRow `form:"lines"`
+	Lines []InvoiceRow
 
-	WrittenBy string
-	TakenBy   string
-	Note      string
-	Comment   string
+	WrittenBy string `map:"written_by"`
+	TakenBy   string `map:"taken_by"`
+	Note      string `map:"note"`
+	Comment   string `map:"comment"`
 
 	Summary Summary
 }
@@ -83,8 +83,8 @@ type Summary struct {
 }
 
 type Complete struct {
-	Title  string
-	Signal string
+	Title  string `json:"title" db:"name"`
+	Signal string `json:"signal" db:"id"`
 }
 
 func (s *Summary) AddVat(in float64, value float64) {
@@ -145,7 +145,37 @@ type Settings struct {
 }
 
 type Store[T any] struct {
-	ID     int
-	HTMLID string
-	Data   T
+	ID     int     `json:"id" db:"id"`
+	UUID   *string `json:"uuid" db:"uuid"`
+	HTMLID *string
+	IsNew  bool
+	Data   T `json:"data"`
+}
+
+type Customer struct {
+	Name    string `json:"name"`
+	Code    string `json:"code"`
+	VAT     string `json:"vat"`
+	Email   string `json:"email"`
+	Phone   string `json:"phone"`
+	Addr    string `json:"addr"`
+	Country string `json:"country"`
+}
+
+type CustomerStore Store[Customer]
+
+type Product struct {
+	Name string `json:"name" db:"name"`
+	Code string `json:"code" db:"code"`
+}
+
+type ProductStore Store[Product]
+
+func (p *ProductStore) ToMap() map[string]interface{} {
+	return map[string]interface{}{
+		"id":   p.ID,
+		"uuid": p.UUID,
+		"name": p.Data.Name,
+		"code": p.Data.Code,
+	}
 }

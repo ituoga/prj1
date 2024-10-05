@@ -1,13 +1,15 @@
 package routes
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
-	"strings"
+	"reflect"
 	"time"
 
+	"github.com/ituoga/proj1/pkg/experiments"
+	"github.com/ituoga/proj1/pkg/pages"
 	"github.com/ituoga/proj1/template"
 	"github.com/ituoga/proj1/types"
 
@@ -21,16 +23,39 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 
 	var i = 10
 
-	var invoiceForm = types.Invoice{
-		Rate:         1.0,
-		Currency:     "EUR",
-		SerialName:   "SR",
-		DocumentDate: time.Now().Format("2006-01-02"),
-		DueDate:      time.Now().AddDate(0, 0, 15).Format("2006-01-02"),
-		Lines:        []types.InvoiceRow{{UID: nuid.Next(), Units: "vnt", Vat: 1, Quantity: 1}},
+	SetField := func(obj interface{}, name string, value interface{}) error {
+		structValue := reflect.ValueOf(obj).Elem()
+		structFieldValue := structValue.FieldByName(name)
+
+		if !structFieldValue.IsValid() {
+			return fmt.Errorf("No such field: %s in obj", name)
+		}
+
+		if !structFieldValue.CanSet() {
+			return fmt.Errorf("Cannot set %s field value", name)
+		}
+
+		structFieldType := structFieldValue.Type()
+		val := reflect.ValueOf(value)
+		if structFieldType != val.Type() {
+			return errors.New("Provided value type didn't match obj field type")
+		}
+
+		structFieldValue.Set(val)
+		return nil
 	}
-	var settings = types.Settings{
-		SerialName: "SR",
+	_ = SetField
+
+	var invoiceForm = pages.InvoiceForm{
+		Form: types.Invoice{
+			Rate:         1.0,
+			Currency:     "EUR",
+			SerialName:   "SR",
+			DocumentDate: time.Now().Format("2006-01-02"),
+			DueDate:      time.Now().AddDate(0, 0, 15).Format("2006-01-02"),
+			Lines:        []types.InvoiceRow{{UID: nuid.Next(), Units: "vnt", Vat: 1, Quantity: 1}},
+		},
+		Settings: &settings,
 	}
 
 	var autocomplete = []types.Complete{
@@ -41,6 +66,7 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 		{Signal: "5", Title: "Name 5"},
 		{Signal: "6", Title: "Name 6"},
 	}
+	_ = autocomplete
 
 	sr.Route("/dashboard", func(dashboardRouter chi.Router) {
 		dashboardRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
@@ -85,18 +111,18 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 	})
 
 	sr.HandleFunc("/signal", func(w http.ResponseWriter, r *http.Request) {
-		invoiceForm.Lines = append(invoiceForm.Lines, types.InvoiceRow{UID: nuid.Next(), Units: "vnt", Vat: 1, Quantity: 1})
+		invoiceForm.Form.Lines = append(invoiceForm.Form.Lines, types.InvoiceRow{UID: nuid.Next(), Units: "vnt", Vat: 1, Quantity: 1})
 
 		sse := datastar.NewSSE(w, r)
 
 		datastar.RenderFragmentTempl(sse, template.InvoiceLine(
-			fmt.Sprintf("%d", len(invoiceForm.Lines)), invoiceForm.Lines[len(invoiceForm.Lines)-1],
+			fmt.Sprintf("%d", len(invoiceForm.Form.Lines)), invoiceForm.Form.Lines[len(invoiceForm.Form.Lines)-1],
 		), datastar.WithoutViewTransitions(),
 			datastar.WithMergeAppendElement(),
 			datastar.WithQuerySelector("tbody"),
 		)
 		datastar.RenderFragmentTempl(sse, template.InvoiceLine2(
-			fmt.Sprintf("%d", len(invoiceForm.Lines)), invoiceForm.Lines[len(invoiceForm.Lines)-1],
+			fmt.Sprintf("%d", len(invoiceForm.Form.Lines)), invoiceForm.Form.Lines[len(invoiceForm.Form.Lines)-1],
 		), datastar.WithoutViewTransitions(),
 			datastar.WithMergeAppendElement(),
 			datastar.WithQuerySelector("#tbody"),
@@ -115,19 +141,19 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 		sse := datastar.NewSSE(w, r)
 
 		var lines []types.InvoiceRow
-		for i, v := range invoiceForm.Lines {
+		for i, v := range invoiceForm.Form.Lines {
 			if v.UID != mpp["eln"].(string) {
-				lines = append(lines, invoiceForm.Lines[i])
+				lines = append(lines, invoiceForm.Form.Lines[i])
 			}
 		}
 
-		invoiceForm.Lines = lines
+		invoiceForm.Form.Lines = lines
 
-		invoiceForm.VAT()
+		invoiceForm.Form.VAT()
 
 		datastar.Delete(sse, fmt.Sprintf("#row-%s-one", id), datastar.WithoutViewTransitions())
 		datastar.Delete(sse, fmt.Sprintf("#row-%s-two", id), datastar.WithoutViewTransitions())
-		datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Summary), datastar.WithoutViewTransitions())
+		datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Form.Summary), datastar.WithoutViewTransitions())
 		// datastar.PatchStore(sse, mpp)
 	})
 
@@ -137,11 +163,18 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 		sse := datastar.NewSSE(w, r)
 		_ = sse
 
-		for _, v := range autocomplete {
-			if v.Signal == id {
-				invoiceForm.RecipientName = v.Title
-			}
+		autocomplete, err := experiments.AutoComplete().Get(r.Context(), id)
+		if err != nil {
+			log.Printf("?? %v", err)
 		}
+
+		invoiceForm.Form.RecipientName = autocomplete.Data.Name
+		invoiceForm.Form.RecipientCode = autocomplete.Data.Code
+		invoiceForm.Form.RecipientVAT = autocomplete.Data.VAT
+		invoiceForm.Form.RecipientAddr = autocomplete.Data.Addr
+		invoiceForm.Form.RecipientCountry = autocomplete.Data.Country
+		invoiceForm.Form.RecipientPhone = autocomplete.Data.Phone
+		invoiceForm.Form.RecipientEmail = autocomplete.Data.Email
 
 		datastar.RenderFragmentTempl(sse, template.InvoiceRecipient(invoiceForm), datastar.WithoutViewTransitions())
 
@@ -158,128 +191,51 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 			return
 		}
 
-		for lno, line := range invoiceForm.Lines {
+		for lno, line := range invoiceForm.Form.Lines {
 			if line.UID == mpp.Eln {
-				switch mpp.Elf {
-				case "name":
-					invoiceForm.Lines[lno].Name = mpp.Elv
-				case "price":
-					invoiceForm.Lines[lno].Price, _ = strconv.ParseFloat(mpp.Elv, 64)
-				case "comment":
-					invoiceForm.Lines[lno].Comment = mpp.Elv
-				case "qty":
-					invoiceForm.Lines[lno].Quantity, _ = strconv.ParseFloat(mpp.Elv, 64)
-				case "units":
-					invoiceForm.Lines[lno].Units = mpp.Elv
-				case "vat":
-					invoiceForm.Lines[lno].Vat, _ = strconv.ParseFloat(mpp.Elv, 64)
-				}
+				experiments.Maps().FromMap(map[string]string{mpp.Elf: mpp.Elv}, &invoiceForm.Form.Lines[lno])
+
 				tdid := fmt.Sprintf("%s", mpp.Eln)
-				// log.Printf("%v", tdid)
-				invoiceForm.VAT()
-				vat := invoiceForm.Lines[lno].Price * invoiceForm.Lines[lno].Quantity * invoiceForm.Lines[lno].Vat
+
+				invoiceForm.Form.VAT()
+				vat := invoiceForm.Form.Lines[lno].Price * invoiceForm.Form.Lines[lno].Quantity * invoiceForm.Form.Lines[lno].Vat
 				_ = vat
 				datastar.RenderFragmentTempl(sse, template.TDAmount(tdid, vat), datastar.WithoutViewTransitions(), datastar.WithQuerySelectorID("td-id-"+mpp.Eln))
-				// datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Summary), datastar.WithoutViewTransitions())
+				// datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Form.Summary), datastar.WithoutViewTransitions())
 				// datastar.RenderFragmentTempl(sse, template.Debug(invoiceForm), datastar.WithoutViewTransitions())
 			}
 		}
 
-		switch mpp.Elf {
-		case "document_date":
-			invoiceForm.DocumentDate = mpp.Elv
-		case "due_date":
-			invoiceForm.DueDate = mpp.Elv
-		case "currency":
-			invoiceForm.Currency = mpp.Elv
-		case "currency_rate":
-			invoiceForm.Rate, _ = strconv.ParseFloat(mpp.Elv, 64)
-		case "serial_name":
-			invoiceForm.SerialName = mpp.Elv
-		case "recipient_name":
-			invoiceForm.RecipientName = mpp.Elv
-		case "recipient_code":
-			invoiceForm.RecipientCode = mpp.Elv
-		case "recipient_vat":
-			invoiceForm.RecipientVAT = mpp.Elv
-		case "recipient_email":
-			invoiceForm.RecipientEmail = mpp.Elv
-		case "recipient_phone":
-			invoiceForm.RecipientPhone = mpp.Elv
-		case "recipient_addr":
-			invoiceForm.RecipientAddr = mpp.Elv
-		case "recipient_country":
-			invoiceForm.RecipientCountry = mpp.Elv
-		case "written_by":
-			invoiceForm.WrittenBy = mpp.Elv
-		case "taken_by":
-			invoiceForm.TakenBy = mpp.Elv
-		case "note":
-			invoiceForm.Note = mpp.Elv
-		}
+		experiments.Maps().FromMap(map[string]string{mpp.Elf: mpp.Elv}, &invoiceForm.Form)
 
 		tmp := []types.Complete{}
-		if invoiceForm.RecipientName != "" {
-			for _, v := range autocomplete {
-				if strings.Contains(strings.ToLower(v.Title), strings.ToLower(invoiceForm.RecipientName)) {
-					if len(v.Title) == len(invoiceForm.RecipientName) {
-						continue
-					}
-					tmp = append(tmp, v)
-				}
-			}
+		tmp, err = experiments.AutoComplete().List(invoiceForm.Form.RecipientName)
+		if err != nil {
+			log.Printf("??? %v", err)
 		}
+		log.Printf("ac1 %v %v", tmp, invoiceForm.Form.RecipientName)
+		// if invoiceForm.Form.RecipientName != "" {
+		// 	for _, v := range autocomplete {
+		// 		if strings.Contains(strings.ToLower(v.Title), strings.ToLower(invoiceForm.Form.RecipientName)) {
+		// 			if len(v.Title) == len(invoiceForm.Form.RecipientName) {
+		// 				continue
+		// 			}
+		// 			tmp = append(tmp, v)
+		// 		}
+		// 	}
+		// }
 
 		datastar.RenderFragmentTempl(sse, template.Autocomplete(tmp, "pirkejas"), datastar.WithoutViewTransitions())
 
-		datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Summary), datastar.WithoutViewTransitions())
+		datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Form.Summary), datastar.WithoutViewTransitions())
 
 		datastar.RenderFragmentTempl(sse, template.Debug(invoiceForm), datastar.WithoutViewTransitions())
 
 		_ = sse
 	})
 
-	sr.HandleFunc("/settings", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPatch {
-
-			var mpp map[string]interface{}
-			err := datastar.BodyUnmarshal(r, &mpp)
-			if err != nil {
-				log.Printf("%v", err)
-				return
-			}
-			switch mpp["elf"] {
-			case "my-name":
-				settings.MyName = mpp["elv"].(string)
-			case "my-code":
-				settings.MyCode = mpp["elv"].(string)
-			case "my-vat":
-				settings.MyVAT = mpp["elv"].(string)
-			case "my-email":
-				settings.MyEmail = mpp["elv"].(string)
-			case "my-phone":
-				settings.MyPhone = mpp["elv"].(string)
-			case "my-address":
-				settings.MyAddr = mpp["elv"].(string)
-			case "my-country":
-				settings.MyCountry = mpp["elv"].(string)
-			case "my-series":
-				settings.SerialName = mpp["elv"].(string)
-			case "my-number":
-				settings.SerialNo, _ = strconv.Atoi(mpp["elv"].(string))
-			}
-
-			datastar.NewSSE(w, r)
-			return
-		}
-
-		template.Settings(settings, map[string]interface{}{
-			"elv": "", "eln": "", "elf": "",
-		}).Render(r.Context(), w)
-	})
-
 	sr.HandleFunc("/reset", func(w http.ResponseWriter, r *http.Request) {
-		invoiceForm = types.Invoice{
+		invoiceForm.Form = types.Invoice{
 			Rate:         1.0,
 			Currency:     "EUR",
 			SerialName:   "SR",
@@ -287,25 +243,63 @@ func SetupDefault(sr chi.Router, session sessions.Store) {
 			DueDate:      time.Now().AddDate(0, 0, 15).Format("2006-01-02"),
 			Lines:        []types.InvoiceRow{{UID: nuid.Next(), Units: "vnt", Vat: 1, Quantity: 1}},
 		}
-		invoiceForm.VAT()
+
+		invoiceForm.Form.VAT()
 
 		sse := datastar.NewSSE(w, r)
-		datastar.RenderFragmentTempl(sse, template.InvoiceLines(invoiceForm.Lines, nil), datastar.WithoutViewTransitions())
-		datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Summary), datastar.WithoutViewTransitions())
+		datastar.RenderFragmentTempl(sse, template.InvoiceLines(invoiceForm.Form.Lines, nil), datastar.WithoutViewTransitions())
+		datastar.RenderFragmentTempl(sse, template.Summary(invoiceForm.Form.Summary), datastar.WithoutViewTransitions())
 
 	})
 
 	sr.HandleFunc("/form", func(w http.ResponseWriter, r *http.Request) {
-		invoiceForm.VAT()
-		// log.Printf("%+v", invoiceForm)
-		template.Index2(fmt.Sprintf("%d", i), map[string]interface{}{
-			"elv": "", "eln": "", "elf": "",
-		}, invoiceForm).Render(r.Context(), w)
+		invoiceForm.Form.VAT()
+
+		template.InvoiceForm(invoiceForm).Render(r.Context(), w)
+	})
+
+	sr.Put("/store", func(w http.ResponseWriter, r *http.Request) {
+		experiments.Invoice().Store(r.Context(), invoiceForm.Form)
+		sse := datastar.NewSSE(w, r)
+		_ = sse
 	})
 
 	sr.Route("/invoices", func(invoicesRouter chi.Router) {
 		invoicesRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
-			template.InvoicesIndex().Render(r.Context(), w)
+			invoices, _ := experiments.Invoice().List(r.Context())
+			template.InvIndex(invoices).Render(r.Context(), w)
+		})
+
+		invoicesRouter.Get("/new", func(w http.ResponseWriter, r *http.Request) {
+			w.Write([]byte("new page"))
+		})
+
+		invoicesRouter.Route("/{id}", func(invoiceRouter chi.Router) {
+			getId := func(r *http.Request) string {
+				id := r.PathValue("id")
+				return id
+			}
+			invoiceRouter.Get("/", func(w http.ResponseWriter, r *http.Request) {
+				id := getId(r)
+				w.Write([]byte(fmt.Sprintf("invoice id: %s", id)))
+			})
+			invoiceRouter.Get("/edit", func(w http.ResponseWriter, r *http.Request) {
+				id := getId(r)
+				data, err := experiments.Invoice().Load(r.Context(), id)
+				if err != nil {
+					log.Printf("%v", err)
+				}
+
+				invoiceForm.Form = data.Data
+				if len(invoiceForm.Form.Lines) == 0 {
+					invoiceForm.Form.Lines = []types.InvoiceRow{{UID: nuid.Next(), Units: "vnt", Vat: 1.00, Quantity: 1}}
+				}
+
+				invoiceForm.Form.VAT()
+
+				template.InvoiceForm(invoiceForm).Render(r.Context(), w)
+			})
 		})
 	})
+
 }

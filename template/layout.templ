@@ -1,6 +1,11 @@
 package template
 
-import "github.com/ituoga/proj1/pkg/pages"
+import (
+	"fmt"
+	"github.com/ituoga/proj1/pkg/pages"
+	"github.com/ituoga/proj1/types"
+	"strconv"
+)
 
 templ Layout(title string) {
 	<html>
@@ -870,7 +875,7 @@ templ Page2() {
 							</form>
 						</div>
 						<div class="flex items-center lg:order-2">
-						<a href="/logout">User: { ctx.Value("user").(string) }</a>
+							<a href="/logout">User: { ctx.Value("user").(string) }</a>
 							<button
 								type="button"
 								data-drawer-toggle="drawer-navigation"
@@ -1597,7 +1602,6 @@ templ Page2() {
 					<div
 						class="hidden absolute bottom-0 left-0 justify-center p-4 space-x-4 w-full lg:flex bg-white dark:bg-gray-800 z-20"
 					>
-
 						<a
 							href="/settings"
 							data-tooltip-target="tooltip-settings"
@@ -1923,97 +1927,41 @@ templ Page2Nav() {
 
 templ Dashboard() {
 	@Page2() {
-		
 	}
 }
 
 templ InvoicesIndex() {
 	@Page2() {
 		<div class="bg-white px-4 sm:px-6 lg:px-8">
-        <!-- Your content -->
-
-        <div class="px-4 sm:px-6 lg:px-8">
-          <div class="sm:flex sm:items-center">
-            <div class="sm:flex-auto">
-              <h1 class="text-base font-semibold leading-6 text-gray-900">Transactions</h1>
-              <p class="mt-2 text-sm text-gray-700">A table of placeholder stock market data that does not make any sense.</p>
-            </div>
-            <div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
-              <button type="button" class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Export</button>
-            </div>
-          </div>
-          <div class="flex flex-wrap gap-4 pt-8">
-            <label for="search" class="absolute invisible">First name</label>
-            <div class="basis-full sm:basis-60">
-              <input type="text" name="search" id="search" autocomplete="given-name" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">
-            </div>
-            <button type="button" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Button</button>
-            <button type="button" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Button</button>
-            <button type="button" class="rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ml-auto">Button</button>
-          </div>
-          <div class="mt-8 flow-root">
-            <div class="-mx-4 -my-2 overflow-auto sm:-mx-6 lg:-mx-8">
-              <div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
-                <table class="min-w-full divide-y divide-gray-300">
-                  <thead class="relative">
-                    <tr class="'overflow-visible">
-                      <th scope="col" class="whitespace-nowrap py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-0">Transaction ID</th>
-                      <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Company</th>
-                      <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Share</th>
-                      <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell">Commision</th>
-                      <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell">Price</th>
-                      <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Quantity</th>
-                      <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Net amount</th>
-                      <th scope="col" class="relative whitespace-nowrap py-3.5 pl-3 pr-4 sm:pr-0">
-                        <span class="sr-only">Edit</span>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody class="divide-y divide-gray-200 bg-white z-10 relative overflow-visible">
-                    <template x-for="i in 40">
-                      <tr>
-                        <td class="whitespace-nowrap py-2 pl-4 pr-3 text-sm text-gray-500 sm:pl-0">AAPS0L</td>
-                        <td class="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900">Chase &amp; Co.</td>
-                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">CAC</td>
-                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hidden sm:table-cell">+$4.37</td>
-                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hidden sm:table-cell">$3,509.00</td>
-                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">12.00</td>
-                        <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">$4,397.00</td>
-
-                        <td>
-
-                          <div class="relative inline-block text-left" x-data="{ rowopen: false }">
-                            <div class="z-1">
-                              <a href="javascript:;" x-on:click.stop.outside="rowopen = false" x-on:click="rowopen = !rowopen" class="relative text-indigo-600 hover:text-indigo-900 z-1">Edit<span class="sr-only">, AAPS0L</span></a>
-                            </div>
-
-                            <div x-cloak x-bind:class="{hidden: ! rowopen}" class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
-                              <div class="py-1" role="none">
-                                <!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-0">Account settings</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-1">Support</a>
-                                <a href="#" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-2">License</a>
-                                <form method="POST" action="#" role="none">
-                                  <button type="submit" class="block w-full px-4 py-2 text-left text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-3">Sign out</button>
-                                </form>
-                              </div>
-                            </div>
-                          </div>
-
-                        </td>
-                      </tr>
-
-                    </template>
-
-                    <!-- More transactions... -->
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-
-      </div>
+			<!-- Your content -->
+			<div class="px-4 sm:px-6 lg:px-8">
+				<div class="sm:flex sm:items-center">
+					<div class="sm:flex-auto">
+						<h1 class="text-base font-semibold leading-6 text-gray-900">Transactions</h1>
+						<p class="mt-2 text-sm text-gray-700">A table of placeholder stock market data that does not make any sense.</p>
+					</div>
+					<div class="mt-4 sm:ml-16 sm:mt-0 sm:flex-none">
+						<button type="button" class="block rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">Export</button>
+					</div>
+				</div>
+				<div class="flex flex-wrap gap-4 pt-8">
+					<label for="search" class="absolute invisible">First name</label>
+					<div class="basis-full sm:basis-60">
+						<input type="text" name="search" id="search" autocomplete="given-name" class="block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"/>
+					</div>
+					<button type="button" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Button</button>
+					<button type="button" class="rounded-md bg-white px-2.5 py-1.5 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50">Button</button>
+					<button type="button" class="rounded-md bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ml-auto">Button</button>
+				</div>
+				<div class="mt-8 flow-root">
+					<div class="-mx-4 -my-2 overflow-visible sm:-mx-6 lg:-mx-8">
+						<div class="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+							{ children... }
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
 	}
 }
 
@@ -2123,15 +2071,103 @@ templ Login(in pages.Login) {
 	</html>
 }
 
+templ InvTable(invoices []types.Store[types.Invoice]) {
+	<table class="min-w-full divide-y divide-gray-300">
+		<thead class="relative">
+			<tr class="'overflow-visible">
+				<th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Date</th>
+				<th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Recipient</th>
+				<th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Amount</th>
+				// <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900">Net amount</th>
+				// <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell">Commision</th>
+				// <th scope="col" class="whitespace-nowrap px-2 py-3.5 text-left text-sm font-semibold text-gray-900 hidden sm:table-cell">Price</th>
+				<th scope="col" class="relative whitespace-nowrap py-3.5 pl-3 pr-4 sm:pr-0">
+					<span class="sr-only">Edit</span>
+				</th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td colspan="4">
+					<div data-text="$row_id"></div>
+				</td>
+			</tr>
+		</tbody>
+		<tbody class="divide-y divide-gray-200 bg-white z-10 relative overflow-visible">
+			for _, invoice := range invoices {
+				<tr>
+					<td class="whitespace-nowrap px-2 py-2 text-sm font-medium text-gray-900"><a href={ templ.SafeURL(fmt.Sprintf("/invoices/%s/edit", invoice.UUID)) }>{ invoice.Data.DocumentDate }</a></td>
+					<td class="whitespace-nowrap px-2 py-2 text-sm text-gray-900">{ invoice.Data.RecipientName }</td>
+					<td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">{ fmt.Sprintf("%.02f", invoice.Data.Summary.Total) }</td>
+					// <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hidden sm:table-cell">+$4.37</td>
+					// <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500 hidden sm:table-cell">$3,509.00</td>
+					// <td class="whitespace-nowrap px-2 py-2 text-sm text-gray-500">$4,397.00</td>
+					<td>
+						<div class="relative inline-block text-left">
+							<div class="z-1">
+								<button data-on-click={ fmt.Sprintf(`$row_id = $row_id == "%s" ? "" : "%s";`, invoice.UUID, invoice.UUID) } data-on-click.outside="$row_id='';" class="relative text-indigo-600 hover:text-indigo-900 z-1">opt<span class="sr-only">, AAPS0L</span></button>
+							</div>
+							<div data-show={ fmt.Sprintf(`$row_id == "%s"`, invoice.UUID) } class="block absolute right-8 z-50 mt-2 w-56 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" tabindex="-1">
+								<div class="py-1" role="none">
+									<a class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-1" href={ templ.SafeURL(fmt.Sprintf("/invoices/%s/edit", invoice.UUID)) }>edit</a>
+									<!-- Active: "bg-gray-100 text-gray-900", Not Active: "text-gray-700" -->
+									<a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem" tabindex="-1" id="menu-item-0">Paid</a>
+									// <a href="#" class="block px-4 py-2 text-sm text-gray-700" role="menuitem" tabindex="-1" id="menu-item-1">Edit</a>
+								</div>
+							</div>
+						</div>
+					</td>
+				</tr>
+			}
+			<!-- More transactions... -->
+		</tbody>
+	</table>
+}
 
-templ CustomersIndex() {
-	@Page2() {
-		<h1>Customers</h1>
+templ InvIndex(invoices []types.Store[types.Invoice]) {
+	@InvoicesIndex() {
+		<div data-store={ `{ row_id: "", iactive: 0 } ` }></div>
+		@InvTable(invoices)
 	}
 }
 
-templ ProductsIndex() {
-	@Page2() {
-		products
-	}
+templ Test() {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>Document</title>
+			<script type="module" defer src="https://cdn.jsdelivr.net/npm/@sudodevnull/datastar"></script>
+		</head>
+		<body data-store="{ row_id: '' }">
+			<div>
+				RowID: <span data-text="$row_id"></span>
+			</div>
+			<hr/>
+			for i := range 10 {
+				<button data-on-click={ fmt.Sprintf("$row_id = '%d';", i) } data-on-click.outside="$row_id = 'outside';">Click me { strconv.Itoa(i) }</button>
+			}
+			<hr/>
+			<div id="ind">Loading Indicator</div>
+			<button
+				data-on-click="$$get('/examples/fetch_indicator/greet')"
+				data-fetch-indicator="'#ind'"
+				data-bind-disabled="$$isFetching('#ind')"
+			>
+				Click me for a greeting
+			</button>
+			<div id="greeting"></div>
+
+			<div id="ind2">Loading Indicator 22222222</div>
+			<button
+				data-on-click="$$get('/stream')"
+				data-fetch-indicator="'#ind2'"
+				data-bind-disabled="$$isFetching('#ind2')"
+			>
+				Click me for a greeting
+			</button>
+			<div id="greeting"></div>
+		</body>
+	</html>
 }
